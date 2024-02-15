@@ -99,7 +99,17 @@ class _HomePageScreenState extends ConsumerState<HomePageScreen> {
           if (index == _tNCModelsList.length) {
             return TextButton(
               onPressed: () {
-                //todo
+                showModalBottomSheet(
+                  context: context,
+                  builder: (context) {
+                    return _BottomSheet(
+                      addCard: (tncModel) {
+                        _tNCModelsList.add(tncModel);
+                        setState(() {});
+                      },
+                    );
+                  },
+                );
               },
               child: const Text("Add More"),
             );
@@ -182,6 +192,58 @@ class _TnCCardState extends State<_TnCCard> {
               )
             ],
           )
+        ],
+      ),
+    );
+  }
+}
+
+class _BottomSheet extends StatelessWidget {
+  _BottomSheet({required this.addCard});
+
+  final Function(TnCModel) addCard;
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    var border = const OutlineInputBorder();
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 10),
+          const Text(
+            "Add new TnC",
+            style: TextStyle(
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: _controller,
+            decoration: InputDecoration(
+              border: border,
+              enabledBorder: border,
+              focusedBorder: border,
+              hintText: "Enter tnc",
+            ),
+          ),
+          const SizedBox(height: 20),
+          Center(
+            child: TextButton(
+              onPressed: () {
+                addCard(TnCModel(
+                  id: DateTime.now().millisecondsSinceEpoch,
+                  value: _controller.text,
+                  createdAt: DateTime.now().toIso8601String(),
+                  updatedAt: DateTime.now().toIso8601String(),
+                ));
+                Navigator.pop(context);
+              },
+              child: const Text("Add"),
+            ),
+          ),
         ],
       ),
     );
