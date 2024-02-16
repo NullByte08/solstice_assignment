@@ -4,6 +4,8 @@ import 'package:google_mlkit_translation/google_mlkit_translation.dart';
 
 import '../models/tnc_model.dart';
 
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+
 class HomePageScreen extends ConsumerStatefulWidget {
   const HomePageScreen({Key? key}) : super(key: key);
 
@@ -198,11 +200,69 @@ class _TnCCardState extends State<_TnCCard> {
   }
 }
 
-class _BottomSheet extends StatelessWidget {
-  _BottomSheet({required this.addCard});
+class _BottomSheet extends StatefulWidget {
+  const _BottomSheet({required this.addCard});
 
   final Function(TnCModel) addCard;
+
+  @override
+  State<_BottomSheet> createState() => _BottomSheetState();
+}
+
+class _BottomSheetState extends State<_BottomSheet> {
   final TextEditingController _controller = TextEditingController();
+  final stt.SpeechToText _speechToText = stt.SpeechToText();
+  bool _speechEnabled = false;
+  bool _recording = false;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  _startSpeechToText() async {
+    if (!_speechEnabled) {
+      _speechEnabled = await _speechToText.initialize(
+        onError: (speechRecognitionError) {
+          debugPrint(speechRecognitionError.toJson().toString());
+        },
+        debugLogging: true,
+      );
+      debugPrint(_speechEnabled.toString());
+      setState(() {});
+    }
+    if (_speechEnabled) {
+      debugPrint("Started listening");
+      _speechToText.listen(
+        onResult: (result) {
+          _stopSpeechToText();
+          setState(() {
+            _controller.text += result.recognizedWords;
+          });
+          debugPrint("Controller text: ${_controller.text}");
+        },
+        listenOptions: stt.SpeechListenOptions(
+          autoPunctuation: true,
+          partialResults: false,
+        ),
+      );
+    } else {
+      debugPrint("The user has denied the use of speech recognition.");
+    }
+  }
+
+  @override
+  void dispose() {
+    _speechToText.cancel();
+    super.dispose();
+  }
+
+  _stopSpeechToText() {
+    _speechToText.stop();
+    setState(() {
+      _recording = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -227,13 +287,40 @@ class _BottomSheet extends StatelessWidget {
               enabledBorder: border,
               focusedBorder: border,
               hintText: "Enter tnc",
+              suffixIcon: InkWell(
+                onTap: () {
+                  setState(() {
+                    _recording = !_recording;
+                  });
+                  if (_recording) {
+                    _startSpeechToText();
+                  } else {
+                    _stopSpeechToText();
+                  }
+                },
+                child: _recording
+                    ? const Icon(
+                        Icons.stop,
+                        color: Colors.red,
+                      )
+                    : const Icon(
+                        Icons.mic,
+                        color: Colors.black,
+                      ),
+              ),
+            ),
+          ),
+          Text(
+            _recording ? "Listening" : "",
+            style: const TextStyle(
+              fontSize: 20,
             ),
           ),
           const SizedBox(height: 20),
           Center(
             child: TextButton(
               onPressed: () {
-                addCard(TnCModel(
+                widget.addCard(TnCModel(
                   id: DateTime.now().millisecondsSinceEpoch,
                   value: _controller.text,
                   createdAt: DateTime.now().toIso8601String(),
