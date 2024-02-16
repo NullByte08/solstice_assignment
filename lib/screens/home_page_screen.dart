@@ -159,11 +159,39 @@ class _TnCCardState extends State<_TnCCard> {
       ),
       child: Column(
         children: [
-          Text(
-            widget.tnCModel.value,
-            style: const TextStyle(
-              fontSize: 20,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  widget.tnCModel.value,
+                  style: const TextStyle(
+                    fontSize: 20,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 20),
+              InkWell(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return _TnCEditDialog(
+                        tNCText: widget.tnCModel.value,
+                        onChanged: (value){
+                          setState(() {
+                            widget.tnCModel.value = value;
+                          });
+                        },
+                      );
+                    },
+                  );
+                },
+                child: const Icon(
+                  Icons.edit,
+                ),
+              )
+            ],
           ),
           const SizedBox(height: 10),
           if (_translating) const CircularProgressIndicator(),
@@ -195,6 +223,42 @@ class _TnCCardState extends State<_TnCCard> {
             ],
           )
         ],
+      ),
+    );
+  }
+}
+
+class _TnCEditDialog extends StatelessWidget {
+  const _TnCEditDialog({required this.tNCText, required this.onChanged});
+
+  final String tNCText;
+  final Function(String) onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    var border = const OutlineInputBorder();
+    return Center(
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.8,
+        height: 100,
+        child: Material(
+          color: Colors.transparent,
+          child: Center(
+            child: Container(
+              color: Colors.white,
+              padding: const EdgeInsets.all(20),
+              child: TextFormField(
+                initialValue: tNCText,
+                decoration: InputDecoration(
+                  border: border,
+                  enabledBorder: border,
+                  focusedBorder: border,
+                ),
+                onChanged: onChanged,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
