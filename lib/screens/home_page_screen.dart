@@ -1,6 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mlkit_translation/google_mlkit_translation.dart';
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
+import 'package:solstice_assignment/models/parameter_models.dart';
+import 'package:solstice_assignment/services/future_providers.dart';
 
 import '../models/tnc_model.dart';
 
@@ -14,76 +18,104 @@ class HomePageScreen extends ConsumerStatefulWidget {
 }
 
 class _HomePageScreenState extends ConsumerState<HomePageScreen> {
-  final List<TnCModel> _tNCModelsList = [
-    TnCModel(
-      id: 11989,
-      value: "1 Year Service Warranty & 5 Years Plywood Warranty",
-      createdAt: "2024-01-06 12:08:11",
-      updatedAt: "2024-01-06 12:08:11",
-    ),
-    TnCModel(
-      id: 11990,
-      value: "Customer Should inform about the Changes (if any Design & colour) before\nproduction or else Customer should pay Extra",
-      createdAt: "2024-01-06 12:08:11",
-      updatedAt: "2024-01-06 12:08:11",
-    ),
-    TnCModel(
-      id: 11991,
-      value: "Material will be delivered 3-4 weeks the date of Confirmation of Order",
-      createdAt: "2024-01-06 12:08:11",
-      updatedAt: "2024-01-06 12:08:11",
-    ),
-    TnCModel(
-      id: 11992,
-      value: "Quotation cant be changed / revised once accepted by the customer",
-      createdAt: "2024-01-06 12:08:11",
-      updatedAt: "2024-01-06 12:08:11",
-    ),
-    TnCModel(
-      id: 11993,
-      value: "If any extra works are needed then it should be paid by customer",
-      createdAt: "2024-01-06 12:08:11",
-      updatedAt: "2024-01-06 12:08:11",
-    ),
-    TnCModel(
-      id: 11994,
-      value: "Custom Handles will be charged extra.Handle price may vary based of designs &\nspecifications",
-      createdAt: "2024-01-06 12:08:11",
-      updatedAt: "2024-01-06 12:08:11",
-    ),
-    TnCModel(
-      id: 11995,
-      value: "Once the Project is confirmed, the amount cannot be refunded",
-      createdAt: "2024-01-06 12:08:11",
-      updatedAt: "2024-01-06 12:08:11",
-    ),
-    TnCModel(
-      id: 11996,
-      value: "This Quote will be valid only for 15 Days",
-      createdAt: "2024-01-06 12:08:11",
-      updatedAt: "2024-01-06 12:08:11",
-    ),
-    TnCModel(
-      id: 11997,
-      value: "Any additional work which is out of the quotation in any aspects is to be paid extra by\nthe customer",
-      createdAt: "2024-01-06 12:08:11",
-      updatedAt: "2024-01-06 12:08:11",
-    ),
-  ];
+  // final List<TnCModel> _tNCModelsList = [
+  //   TnCModel(
+  //     id: 11989,
+  //     value: "1 Year Service Warranty & 5 Years Plywood Warranty",
+  //     createdAt: "2024-01-06 12:08:11",
+  //     updatedAt: "2024-01-06 12:08:11",
+  //   ),
+  //   TnCModel(
+  //     id: 11990,
+  //     value: "Customer Should inform about the Changes (if any Design & colour) before\nproduction or else Customer should pay Extra",
+  //     createdAt: "2024-01-06 12:08:11",
+  //     updatedAt: "2024-01-06 12:08:11",
+  //   ),
+  //   TnCModel(
+  //     id: 11991,
+  //     value: "Material will be delivered 3-4 weeks the date of Confirmation of Order",
+  //     createdAt: "2024-01-06 12:08:11",
+  //     updatedAt: "2024-01-06 12:08:11",
+  //   ),
+  //   TnCModel(
+  //     id: 11992,
+  //     value: "Quotation cant be changed / revised once accepted by the customer",
+  //     createdAt: "2024-01-06 12:08:11",
+  //     updatedAt: "2024-01-06 12:08:11",
+  //   ),
+  //   TnCModel(
+  //     id: 11993,
+  //     value: "If any extra works are needed then it should be paid by customer",
+  //     createdAt: "2024-01-06 12:08:11",
+  //     updatedAt: "2024-01-06 12:08:11",
+  //   ),
+  //   TnCModel(
+  //     id: 11994,
+  //     value: "Custom Handles will be charged extra.Handle price may vary based of designs &\nspecifications",
+  //     createdAt: "2024-01-06 12:08:11",
+  //     updatedAt: "2024-01-06 12:08:11",
+  //   ),
+  //   TnCModel(
+  //     id: 11995,
+  //     value: "Once the Project is confirmed, the amount cannot be refunded",
+  //     createdAt: "2024-01-06 12:08:11",
+  //     updatedAt: "2024-01-06 12:08:11",
+  //   ),
+  //   TnCModel(
+  //     id: 11996,
+  //     value: "This Quote will be valid only for 15 Days",
+  //     createdAt: "2024-01-06 12:08:11",
+  //     updatedAt: "2024-01-06 12:08:11",
+  //   ),
+  //   TnCModel(
+  //     id: 11997,
+  //     value: "Any additional work which is out of the quotation in any aspects is to be paid extra by\nthe customer",
+  //     createdAt: "2024-01-06 12:08:11",
+  //     updatedAt: "2024-01-06 12:08:11",
+  //   ),
+  // ];
 
   static const TranslateLanguage sourceLanguage = TranslateLanguage.english;
   static const TranslateLanguage targetLanguage = TranslateLanguage.hindi;
   late final OnDeviceTranslator onDeviceTranslator;
 
+  static const _pageSize = 5;
+
+  final PagingController<int, TnCModel> _pagingController = PagingController(firstPageKey: 0);
+
   @override
   void initState() {
     super.initState();
     onDeviceTranslator = OnDeviceTranslator(sourceLanguage: sourceLanguage, targetLanguage: targetLanguage);
+    _pagingController.addPageRequestListener((pageKey) {
+      _fetchPage(pageKey);
+    });
+  }
+
+  Future<void> _fetchPage(int pageKey) async {
+    try {
+      final newItems = await ref.read(getTnCListFutureProvider(
+        GetTnCListFPParams(
+          startIndex: pageKey == 0 ? 11989 : _pagingController.itemList!.last.id + 1,
+          limit: _pageSize,
+        ),
+      ).future);
+      final isLastPage = newItems.length < _pageSize;
+      if (isLastPage) {
+        _pagingController.appendLastPage(newItems);
+      } else {
+        final nextPageKey = pageKey + newItems.length;
+        _pagingController.appendPage(newItems, nextPageKey);
+      }
+    } catch (error) {
+      _pagingController.error = error;
+    }
   }
 
   @override
   void dispose() {
     onDeviceTranslator.close();
+    _pagingController.dispose();
     super.dispose();
   }
 
@@ -94,33 +126,57 @@ class _HomePageScreenState extends ConsumerState<HomePageScreen> {
         title: const Text("Terms and Conditions"),
         scrolledUnderElevation: 0,
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.only(bottom: 100),
-        itemCount: _tNCModelsList.length + 1,
-        itemBuilder: (context, index) {
-          if (index == _tNCModelsList.length) {
-            return TextButton(
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  builder: (context) {
-                    return _BottomSheet(
-                      addCard: (tncModel) {
-                        _tNCModelsList.add(tncModel);
-                        setState(() {});
-                      },
-                    );
-                  },
-                );
-              },
-              child: const Text("Add More"),
-            );
-          }
-          return _TnCCard(
-            tnCModel: _tNCModelsList[index],
-            onDeviceTranslator: onDeviceTranslator,
-          );
-        },
+      body: Column(
+        children: [
+          Expanded(
+            child: PagedListView<int, TnCModel>(
+              pagingController: _pagingController,
+              builderDelegate: PagedChildBuilderDelegate<TnCModel>(
+                itemBuilder: (context, item, index) {
+                  return _TnCCard(
+                    tnCModel: item,
+                    onDeviceTranslator: onDeviceTranslator,
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          TextButton(
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                builder: (context) {
+                  return _BottomSheet(
+                    addCard: (tncModel) async {
+                      var querySnapshot = await FirebaseFirestore.instance.collection("tnc_list").orderBy("id", descending: true).limit(1).get();
+
+                      var docMap = querySnapshot.docs[0].data(); //assuming there exists at least one element in firebase
+                      int lastId = int.parse(docMap["id"].toString());
+
+                      await FirebaseFirestore.instance.collection("tnc_list").add({
+                        "id": lastId + 1,
+                        "value": tncModel.value,
+                        "createdAt": tncModel.createdAt,
+                        "updatedAt": tncModel.updatedAt,
+                      });
+
+                      _pagingController.itemList?.add(TnCModel(
+                        id: lastId + 1,
+                        value: tncModel.value,
+                        createdAt: tncModel.createdAt,
+                        updatedAt: tncModel.updatedAt,
+                      ));
+                      setState(() {});
+                    },
+                  );
+                },
+              );
+            },
+            child: const Text("Add More"),
+          ),
+          const SizedBox(height: 20),
+        ],
       ),
     );
   }
@@ -178,7 +234,7 @@ class _TnCCardState extends State<_TnCCard> {
                     builder: (context) {
                       return _TnCEditDialog(
                         tNCText: widget.tnCModel.value,
-                        onChanged: (value){
+                        onChanged: (value) {
                           setState(() {
                             widget.tnCModel.value = value;
                           });
